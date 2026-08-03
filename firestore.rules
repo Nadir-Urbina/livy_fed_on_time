@@ -1,0 +1,74 @@
+rules_version = '2';
+
+// Livy — Fed On Time security rules.
+//
+// Model: households/{hid} carries a flat `memberIds` uid array mirroring the
+// `caregivers` array of maps. All household data (doc + subcollections) is
+// readable/writable only by members. Joining by invite code is the one
+// carefully-scoped exception: an authenticated non-member may add exactly
+// themselves, respecting the 5-seat limit.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isMember(hid) {
+      return signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/households/$(hid)).data.memberIds;
+    }
+
+    // users/{uid} — private per-user pointer {householdId, name}.
+    match /users/{userId} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+
+    // invites/{code} — code → householdId lookup. Readable by any signed-in
+    // user (that's how joining works; codes are unguessable). Created by the
+    // household's members only. Never listable client-side.
+    // getAfter(): the invite is written in the same batch that creates the
+    // household, so membership must be evaluated against post-batch state.
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+          && request.resource.data.keys().hasOnly(['householdId'])
+          && request.auth.uid in getAfter(/databases/$(database)/documents/households/$(request.resource.data.householdId)).data.memberIds;
+      allow update, delete: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/households/$(resource.data.householdId)).data.memberIds;
+    }
+
+    match /households/{hid} {
+
+      function memberNow() {
+        return signedIn() && request.auth.uid in resource.data.memberIds;
+      }
+
+      // A non-member joining via invite: only `caregivers` and `memberIds`
+      // change, they add exactly themselves, and the 5-seat limit holds.
+      function isJoiningSelf() {
+        return signedIn()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['caregivers', 'memberIds'])
+            && request.resource.data.memberIds.size() == resource.data.memberIds.size() + 1
+            && request.resource.data.memberIds.size() <= 5
+            && request.auth.uid in request.resource.data.memberIds
+            && !(request.auth.uid in resource.data.memberIds)
+            && request.resource.data.caregivers.size() == resource.data.caregivers.size() + 1;
+      }
+
+      allow get, list: if memberNow();
+      allow create: if signedIn()
+          && request.resource.data.memberIds == [request.auth.uid]
+          && request.resource.data.caregivers.size() == 1;
+      allow update: if memberNow() || isJoiningSelf();
+      allow delete: if memberNow();
+
+      // Shared household data — feeds, recommendations, formula journal.
+      match /{collection}/{docId} {
+        allow read, write: if isMember(hid);
+      }
+    }
+  }
+}

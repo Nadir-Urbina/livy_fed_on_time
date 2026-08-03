@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "households",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "reminder.sent", "order": "ASCENDING"},
+        {"fieldPath": "reminder.sendAtMs", "order": "ASCENDING"}
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
