@@ -260,7 +260,7 @@ class _PaywallPageState extends State<_PaywallPage> {
             child: _PlanChip(
               title: 'Yearly',
               price: purchases.annualPriceLabel,
-              note: 'about two months free',
+              note: 'save about 33%',
               selected: _annual,
               onTap: () => setState(() => _annual = true),
             ),
@@ -282,7 +282,9 @@ class _PaywallPageState extends State<_PaywallPage> {
               ? 'One moment…'
               : purchases.demoMode
                   ? 'Unlock (demo purchase)'
-                  : 'Unlock Livy',
+                  : purchases.hasIntroTrial
+                      ? 'Start 7-day free trial'
+                      : 'Unlock Livy',
           icon: Icons.lock_open_rounded,
           onPressed: _busy ? null : _buy,
         ),
@@ -296,8 +298,10 @@ class _PaywallPageState extends State<_PaywallPage> {
           child: const Text('Restore purchase'),
         ),
         Text(
-          'Caregivers you invite don\'t pay — one subscription covers the household. '
-          'No free trial; joining via an invite code needs no plan at all.',
+          'Caregivers you invite don\'t pay — one subscription covers the household, '
+          'and joining via an invite code needs no plan at all. New subscribers get '
+          '7 days free; the plan then renews automatically at the selected price '
+          'until cancelled in iOS Settings.',
           textAlign: TextAlign.center,
           style: LivyType.body(size: 11, color: LivyColors.faint),
         ),

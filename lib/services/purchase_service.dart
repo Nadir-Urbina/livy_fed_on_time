@@ -136,7 +136,19 @@ class PurchaseService extends ChangeNotifier {
   /// Display prices for the paywall; live values come from the store when
   /// configured, warm defaults otherwise.
   String get monthlyPriceLabel =>
-      _offerings?.current?.monthly?.storeProduct.priceString ?? r'$6.99';
+      _offerings?.current?.monthly?.storeProduct.priceString ?? r'$4.99';
   String get annualPriceLabel =>
-      _offerings?.current?.annual?.storeProduct.priceString ?? r'$49.99';
+      _offerings?.current?.annual?.storeProduct.priceString ?? r'$39.99';
+
+  /// Whether the storefront products carry a free-trial introductory offer
+  /// (the launch config includes 7 days free). When offerings haven't loaded
+  /// yet (debug / RevenueCat unreachable) we assume the launch config so the
+  /// paywall copy matches what App Store Connect actually sells.
+  bool get hasIntroTrial {
+    final o = _offerings?.current;
+    final intro = o?.annual?.storeProduct.introductoryPrice ??
+        o?.monthly?.storeProduct.introductoryPrice;
+    if (intro == null) return o == null;
+    return intro.price == 0;
+  }
 }

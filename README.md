@@ -79,8 +79,10 @@ demonstrable offline. Demo data persists across restarts; reset it from
    - Set `iosApiKey` / `androidApiKey` and (if renamed) `entitlementId` in
      `lib/services/purchase_service.dart` — pricing/products are configured in
      the RevenueCat dashboard; gating is a one-line change.
-   - Single tier, hard paywall, no free trial; one subscription unlocks the
-     household (invited caregivers don't pay).
+   - Hard paywall with a 7-day free trial for new subscribers; monthly
+     ($4.99) + yearly ($39.99) tiers, one subscription unlocks the household
+     (invited caregivers don't pay). Store products:
+     `livy_fed_on_time_monthly` / `livy_fed_on_time_yearly`.
 3. **FDA recall feed** — ✅ live
    - `OpenFdaRecallDataSource` pulls infant-formula recalls from the openFDA
      food-enforcement API (no key needed at this volume), keeps the last two
