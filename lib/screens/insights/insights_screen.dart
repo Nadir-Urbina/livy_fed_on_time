@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
+import '../../build_flags.dart';
 import '../../data/app_state.dart';
 import '../../models/insights.dart';
 import '../../models/mascots.dart';
@@ -54,7 +55,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   ],
                 ),
               ),
-              if (app.isDemo) const DemoBadge(),
+              if (app.isDemo && !kScreenshotMode) const DemoBadge(),
             ],
           ),
 

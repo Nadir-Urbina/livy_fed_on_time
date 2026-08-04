@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import 'build_flags.dart';
 import 'data/app_state.dart';
 import 'data/firestore_repository.dart';
 import 'data/local_repository.dart';
@@ -33,6 +34,8 @@ Future<void> main() async {
   } catch (_) {
     firebaseAvailable = false;
   }
+  // Marketing-screenshot builds run the seeded demo household regardless.
+  if (kScreenshotMode) firebaseAvailable = false;
 
   LivyRepository repository;
   if (firebaseAvailable && FirebaseAuth.instance.currentUser != null) {

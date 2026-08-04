@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
+import '../../build_flags.dart';
 import '../../data/app_state.dart';
 import '../../models/mascots.dart';
 import '../../models/models.dart';
@@ -112,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Row(children: [
                           Text(_greeting(), style: LivyType.label()),
-                          if (app.isDemo) ...[
+                          if (app.isDemo && !kScreenshotMode) ...[
                             const SizedBox(width: LivySpace.sm),
                             const DemoBadge(),
                           ],
