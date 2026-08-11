@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,6 +21,30 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _index = 0;
+  Timer? _clock;
+  late bool _daytime = _isDaytime(DateTime.now());
+
+  /// 6am–6pm reads as "Today"; the rest of the clock is "Tonight". Deliberately
+  /// not the theme's day/dusk/night split — this is only about which word a
+  /// parent expects to see on the tab at that hour.
+  static bool _isDaytime(DateTime t) => t.hour >= 6 && t.hour < 18;
+
+  @override
+  void initState() {
+    super.initState();
+    // The label flips twice a day; a one-minute tick is plenty to catch it
+    // without waiting for some other rebuild to happen along.
+    _clock = Timer.periodic(const Duration(minutes: 1), (_) {
+      final next = _isDaytime(DateTime.now());
+      if (next != _daytime) setState(() => _daytime = next);
+    });
+  }
+
+  @override
+  void dispose() {
+    _clock?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,10 +67,13 @@ class _MainShellState extends State<MainShell> {
         onDestinationSelected: (i) => setState(() => _index = i),
         height: 68,
         destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.nightlight_round_outlined),
-            selectedIcon: Icon(Icons.nightlight_round),
-            label: 'Tonight',
+          NavigationDestination(
+            icon: Icon(_daytime
+                ? Icons.wb_sunny_outlined
+                : Icons.nightlight_round_outlined),
+            selectedIcon:
+                Icon(_daytime ? Icons.wb_sunny_rounded : Icons.nightlight_round),
+            label: _daytime ? 'Today' : 'Tonight',
           ),
           const NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),

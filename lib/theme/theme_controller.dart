@@ -10,12 +10,16 @@ enum ThemeOverride { auto, day, dusk, night }
 /// Drives the time-adaptive theme: sunny by day, golden at dusk, deep indigo
 /// at night. Checks the clock every minute; users can pin a phase from
 /// Mascot & settings ("Auto" follows the sun).
+///
+/// Fresh installs open on the night palette — most first launches happen in
+/// the small hours, and the dark theme is the gentler one to meet at 3am.
 class ThemeController extends ChangeNotifier {
   ThemeController._();
 
   static const _prefKey = 'livy.themeOverride';
+  static const _defaultMode = ThemeOverride.night;
 
-  ThemeOverride _overrideMode = ThemeOverride.auto;
+  ThemeOverride _overrideMode = _defaultMode;
   Timer? _timer;
   late SharedPreferences _prefs;
 
@@ -27,7 +31,7 @@ class ThemeController extends ChangeNotifier {
     c._prefs = await SharedPreferences.getInstance();
     c._overrideMode = ThemeOverride.values
             .asNameMap()[c._prefs.getString(_prefKey)] ??
-        ThemeOverride.auto;
+        _defaultMode;
     LivyColors.applyPhase(c._effectivePhase());
     c._timer = Timer.periodic(const Duration(minutes: 1), (_) => c._tick());
     return c;

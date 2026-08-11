@@ -17,6 +17,7 @@ import '../../widgets/common.dart';
 import '../../widgets/mascot_view.dart';
 import '../schedule/schedule_screen.dart';
 import 'log_feed_sheet.dart';
+import 'log_meal_sheet.dart';
 import 'nightlight_dial.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -152,7 +153,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           '${app.formatAmount(app.lastFeed!.amountMl)}',
                 ),
               ),
+              // Solids read directly under the dial: bottles above, meals
+              // below, so one glance answers "what happened last?" — without
+              // a meal ever touching the countdown.
               const SizedBox(height: LivySpace.sm),
+              Center(child: _LastMealLine(app: app)),
+
+              const SizedBox(height: LivySpace.xs),
               Center(
                 child: TextButton.icon(
                   onPressed: () => Navigator.of(context).push(
@@ -168,6 +175,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 label: 'Log a feed',
                 icon: Icons.water_drop_rounded,
                 onPressed: () => showLogFeedSheet(context),
+              ),
+              const SizedBox(height: LivySpace.sm),
+              // Secondary by design: the bottle is still the primary act.
+              VoxelButton(
+                label: 'Log a solid meal',
+                icon: Icons.restaurant_rounded,
+                color: LivyColors.surfaceRaised,
+                textColor: LivyColors.cream,
+                onPressed: () => showLogMealSheet(context),
               ),
 
               const SizedBox(height: LivySpace.lg),
@@ -257,6 +273,52 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1),
     ];
+  }
+}
+
+/// "Last meal 2h ago · pear · oatmeal", tucked directly under the dial.
+///
+/// Sits outside the ring on purpose. Bottles own the countdown; solids are
+/// context for reading it — the gap stretching to five hours makes sense once
+/// you can see there was sweet potato in between. Stays hidden until the
+/// household actually starts solids, so newborn homes never see it.
+class _LastMealLine extends StatelessWidget {
+  const _LastMealLine({required this.app});
+
+  final AppState app;
+
+  @override
+  Widget build(BuildContext context) {
+    final meal = app.lastMeal;
+    if (meal == null) return const SizedBox.shrink();
+
+    final since = app.sinceLastMeal;
+    final label = since.inMinutes < 1
+        ? 'just now'
+        : since.inMinutes < 60
+            ? '${since.inMinutes}m ago'
+            : since.inHours < 24
+                ? '${since.inHours}h ${since.inMinutes % 60}m ago'
+                : '${since.inDays}d ago';
+
+    return GestureDetector(
+      onTap: () => showLogMealSheet(context),
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.restaurant_rounded, size: 14, color: LivyColors.mint),
+          const SizedBox(width: LivySpace.xs),
+          Flexible(
+            child: Text(
+              'Last meal $label · ${meal.foodLabel}',
+              overflow: TextOverflow.ellipsis,
+              style: LivyType.body(size: 13, color: LivyColors.mist),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 300.ms);
   }
 }
 

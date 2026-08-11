@@ -9,6 +9,7 @@ class HouseholdBundle {
   HouseholdBundle({
     required this.household,
     required this.feeds,
+    this.meals = const [],
     this.recommendations = const [],
     this.formulaSwitches = const [],
     this.streaks = const StreakState(),
@@ -22,6 +23,10 @@ class HouseholdBundle {
 
   /// Sorted newest-first.
   final List<Feed> feeds;
+
+  /// Solid meals, sorted newest-first. Kept apart from [feeds] on purpose —
+  /// see [SolidMeal]. Nothing here feeds the dial, the streaks or any mL math.
+  final List<SolidMeal> meals;
   final List<LivyRecommendation> recommendations;
   final List<FormulaSwitchEntry> formulaSwitches;
   final StreakState streaks;
@@ -34,12 +39,14 @@ class HouseholdBundle {
   final List<DailyRollup> rollups;
 
   Feed? get lastFeed => feeds.isEmpty ? null : feeds.first;
+  SolidMeal? get lastMeal => meals.isEmpty ? null : meals.first;
 
   bool hasBadge(String badgeId) => badges.any((b) => b.badgeId == badgeId);
 
   Map<String, dynamic> toJson() => {
         'household': household.toJson(),
         'feeds': feeds.map((f) => f.toJson()).toList(),
+        'meals': meals.map((m) => m.toJson()).toList(),
         'recommendations': recommendations.map((r) => r.toJson()).toList(),
         'formulaSwitches': formulaSwitches.map((f) => f.toJson()).toList(),
         'streaks': streaks.toJson(),
@@ -52,6 +59,8 @@ class HouseholdBundle {
   factory HouseholdBundle.fromJson(Map<String, dynamic> j) => HouseholdBundle(
         household: Household.fromJson(Map<String, dynamic>.from(j['household'] as Map)),
         feeds: _list(j['feeds']).map(Feed.fromJson).toList()
+          ..sort((a, b) => b.time.compareTo(a.time)),
+        meals: _list(j['meals']).map(SolidMeal.fromJson).toList()
           ..sort((a, b) => b.time.compareTo(a.time)),
         recommendations: _list(j['recommendations']).map(LivyRecommendation.fromJson).toList(),
         formulaSwitches: _list(j['formulaSwitches']).map(FormulaSwitchEntry.fromJson).toList(),
@@ -72,6 +81,7 @@ class HouseholdBundle {
   HouseholdBundle copyWith({
     Household? household,
     List<Feed>? feeds,
+    List<SolidMeal>? meals,
     List<LivyRecommendation>? recommendations,
     List<FormulaSwitchEntry>? formulaSwitches,
     StreakState? streaks,
@@ -83,6 +93,7 @@ class HouseholdBundle {
       HouseholdBundle(
         household: household ?? this.household,
         feeds: feeds ?? this.feeds,
+        meals: meals ?? this.meals,
         recommendations: recommendations ?? this.recommendations,
         formulaSwitches: formulaSwitches ?? this.formulaSwitches,
         streaks: streaks ?? this.streaks,
@@ -117,6 +128,11 @@ abstract class LivyRepository {
 
   Future<void> logFeed(Feed feed);
   Future<void> deleteFeed(String feedId);
+
+  /// Solid meals live in their own store; logging one must never disturb the
+  /// bottle schedule, the reminder or any streak.
+  Future<void> logMeal(SolidMeal meal);
+  Future<void> deleteMeal(String mealId);
 
   Future<void> setSchedule(FeedingSchedule schedule);
   Future<void> proposeScheduleChange(ScheduleChangeRequest request);

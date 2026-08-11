@@ -132,6 +132,18 @@ class LocalRepository implements LivyRepository {
       _mutate((b) => b.copyWith(feeds: b.feeds.where((f) => f.id != feedId).toList()));
 
   @override
+  Future<void> logMeal(SolidMeal meal) => _mutate((b) {
+        final meals = [meal, ...b.meals]..sort((x, y) => y.time.compareTo(x.time));
+        // No rollup recompute: meals are deliberately absent from every mL
+        // figure and feed count in Insights.
+        return b.copyWith(meals: meals);
+      });
+
+  @override
+  Future<void> deleteMeal(String mealId) =>
+      _mutate((b) => b.copyWith(meals: b.meals.where((m) => m.id != mealId).toList()));
+
+  @override
   Future<void> setSchedule(FeedingSchedule schedule) =>
       _mutate((b) => b.copyWith(household: b.household.copyWith(schedule: schedule)));
 
@@ -183,7 +195,8 @@ class LocalRepository implements LivyRepository {
 
   @override
   Future<void> addDisclaimerAck(DisclaimerAcknowledgment ack) => _mutate((b) =>
-      b.disclaimerAcks.any((a) => a.caregiverId == ack.caregiverId)
+      b.disclaimerAcks
+              .any((a) => a.caregiverId == ack.caregiverId && a.kind == ack.kind)
           ? b
           : b.copyWith(disclaimerAcks: [...b.disclaimerAcks, ack]));
 

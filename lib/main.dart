@@ -55,6 +55,11 @@ Future<void> main() async {
 
   final purchases = PurchaseService(demoMode: !firebaseAvailable);
   await purchases.init();
+  // Already signed in from a previous launch — re-attach the RevenueCat
+  // customer to the Firebase uid before the gate is evaluated.
+  if (firebaseAvailable && FirebaseAuth.instance.currentUser != null) {
+    await purchases.identify(FirebaseAuth.instance.currentUser!.uid);
+  }
 
   await NotificationService.instance.init();
 
@@ -120,8 +125,11 @@ class _Root extends StatelessWidget {
     final purchases = context.watch<PurchaseService>();
 
     // The seeded demo household ships "unlocked" so the app is instantly
-    // demonstrable; a fresh household walks the full paywall + onboarding.
-    final ready = app.hasHousehold && (purchases.hasHouseholdAccess || app.isDemo);
+    // demonstrable; a fresh household walks the full onboarding + paywall.
+    // Invited caregivers are covered by the account holder's plan, so they
+    // need a household but never an entitlement of their own.
+    final ready = app.hasHousehold &&
+        (purchases.hasHouseholdAccess || app.isDemo || app.isInvitedMember);
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 500),

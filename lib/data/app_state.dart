@@ -65,6 +65,19 @@ class AppState extends ChangeNotifier {
     return me?.isAccountHolder ?? isDemo;
   }
 
+  /// True when this device belongs to a household somebody else pays for.
+  /// Invited caregivers never need their own subscription — one plan covers
+  /// the household — so they must not be gated behind the paywall.
+  ///
+  /// Deliberately requires a caregiver record to actually exist: a missing
+  /// record must not read as "invited" and hand out free access.
+  bool get isInvitedMember {
+    final me = _bundle?.household.caregivers
+        .where((c) => c.id == caregiverId)
+        .firstOrNull;
+    return me != null && !me.isAccountHolder;
+  }
+
   MascotDef get mascot => MascotCatalog.byId(_bundle?.mascot.mascotId ?? 'granny');
   String get mascotName => _bundle?.mascot.customName ?? mascot.defaultName;
 
@@ -124,6 +137,21 @@ class AppState extends ChangeNotifier {
 
   Duration get sinceLastFeed =>
       lastFeed == null ? Duration.zero : DateTime.now().difference(lastFeed!.time);
+
+  /// Solid meals sit alongside the dial, never inside its maths — a few
+  /// spoonfuls of squash don't reset a bottle countdown.
+  SolidMeal? get lastMeal => _bundle?.lastMeal;
+
+  Duration get sinceLastMeal =>
+      lastMeal == null ? Duration.zero : DateTime.now().difference(lastMeal!.time);
+
+  /// True once the household is actually feeding solids — used to read a
+  /// falling bottle volume as weaning rather than as lost appetite.
+  bool get isEatingSolids {
+    final meals = _bundle?.meals ?? const <SolidMeal>[];
+    if (meals.isEmpty) return false;
+    return DateTime.now().difference(meals.first.time) < const Duration(days: 14);
+  }
 
   DateTime? get nextFeedDue =>
       lastFeed?.time.add(_bundle?.household.schedule.interval ?? const Duration(hours: 3));
@@ -196,6 +224,31 @@ class AppState extends ChangeNotifier {
     await _afterHistoryChange();
   }
 
+  /// Logs a solid meal.
+  ///
+  /// Deliberately does NOT call [_afterHistoryChange]: no streak, badge,
+  /// rollup or recommendation pass runs off a meal, and no reminder is
+  /// rescheduled. The bottle countdown is left exactly where it was.
+  Future<void> logMeal({
+    required List<String> foods,
+    MealReaction reaction = MealReaction.ateSome,
+    DateTime? time,
+    String? note,
+  }) async {
+    if (_bundle == null) return;
+    await repository.logMeal(SolidMeal(
+      id: const Uuid().v4(),
+      time: time ?? DateTime.now(),
+      loggedById: caregiverId,
+      loggedByName: caregiverName,
+      foods: foods,
+      reaction: reaction,
+      note: note,
+    ));
+  }
+
+  Future<void> deleteMeal(String mealId) => repository.deleteMeal(mealId);
+
   /// Recomputes streaks/badges and lets Livy consider a recommendation.
   Future<void> _afterHistoryChange() async {
     final b = repository.bundle ?? _bundle;
@@ -245,11 +298,21 @@ class AppState extends ChangeNotifier {
   Future<void> setMascot({required String mascotId, String? customName}) =>
       repository.saveMascot(MascotState(mascotId: mascotId, customName: customName));
 
-  Future<void> acknowledgeDisclaimer() => repository.addDisclaimerAck(
-      DisclaimerAcknowledgment(caregiverId: caregiverId, acknowledgedAt: DateTime.now()));
+  Future<void> acknowledgeDisclaimer(
+          [DisclaimerKind kind = DisclaimerKind.pediatricianGuide]) =>
+      repository.addDisclaimerAck(DisclaimerAcknowledgment(
+        caregiverId: caregiverId,
+        acknowledgedAt: DateTime.now(),
+        kind: kind,
+      ));
+
+  bool hasAcknowledged(DisclaimerKind kind) =>
+      _bundle?.disclaimerAcks
+          .any((a) => a.caregiverId == caregiverId && a.kind == kind) ??
+      false;
 
   bool get hasAcknowledgedDisclaimer =>
-      _bundle?.disclaimerAcks.any((a) => a.caregiverId == caregiverId) ?? false;
+      hasAcknowledged(DisclaimerKind.pediatricianGuide);
 
   Future<void> createHousehold({
     required String caregiverName,

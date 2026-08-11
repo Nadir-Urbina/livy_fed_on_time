@@ -8,6 +8,7 @@ import '../../legal_links.dart';
 import '../../models/mascots.dart';
 import '../../services/haptics.dart';
 import '../../services/notification_service.dart';
+import '../../services/purchase_service.dart';
 import '../../services/sound_service.dart';
 import '../../theme/theme.dart';
 import '../../theme/theme_controller.dart';
@@ -80,8 +81,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Livy follows the sun — sunny by day, golden at dusk, and the '
-                  'deep nightlight after dark. Pin a look if you prefer.',
+                  'Livy opens in the nightlight. Switch to Auto to follow the '
+                  'sun — sunny by day, golden at dusk — or pin any look you '
+                  'prefer.',
                   style: LivyType.body(size: 13, color: LivyColors.mist),
                 ),
                 const SizedBox(height: LivySpace.md),
@@ -154,7 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ListTile(
                   title: Text('Feed reminders', style: LivyType.body(size: 15)),
                   subtitle: Text(
-                      'iPhone notifications mirror to a paired Apple Watch automatically',
+                      'A time-sensitive nudge when the next feed comes due',
                       style: LivyType.body(size: 12, color: LivyColors.mist)),
                   trailing: TextButton(
                     onPressed: () async {
@@ -275,6 +277,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _signOut(BuildContext context, AppState app) async {
+    // Captured up front: the context is popped before these are needed.
+    final purchases = context.read<PurchaseService>();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -297,12 +301,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (ok != true || !context.mounted) return;
     Navigator.of(context).popUntil((r) => r.isFirst);
     await app.signOutAndReset();
+    await purchases.forgetUser();
   }
 
   Future<void> _deleteAccount(BuildContext context, AppState app) async {
     final holder = app.isAccountHolder;
     final baby = app.bundle?.household.baby.name ?? 'your baby';
     final messenger = ScaffoldMessenger.of(context);
+    final purchases = context.read<PurchaseService>();
 
     // Step 1: spell out exactly what disappears (role-aware).
     final ok1 = await showDialog<bool>(
@@ -375,6 +381,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Navigator.of(context).popUntil((r) => r.isFirst);
       }
       await app.signOutAndReset();
+      await purchases.forgetUser();
     } catch (e) {
       if (context.mounted) Navigator.of(context).pop(); // progress dialog
       messenger.showSnackBar(SnackBar(

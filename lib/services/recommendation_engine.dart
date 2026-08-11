@@ -9,6 +9,10 @@ import '../models/models.dart';
 /// instruction, and always ends with the pediatrician disclaimer.
 class RecommendationEngine {
   static const _minFeedsForAnalysis = 20;
+
+  /// Age at which CDC/AAP guidance puts the start of solids, and therefore the
+  /// age from which weaning becomes a plausible read of shrinking bottles.
+  static const _solidsFromMonths = 6;
   static const _cooldown = Duration(days: 3);
 
   /// Returns a new recommendation to surface, or null. Called after feed logs;
@@ -31,7 +35,19 @@ class RecommendationEngine {
       );
     }
 
-    final amount = _amountTrend(feeds);
+    // A falling bottle volume means three different things depending on what
+    // else is known, so it gets three different readings.
+    final baby = bundle.household.baby;
+    final onSolids = bundle.meals.any(
+        (m) => now.difference(m.time) < const Duration(days: 14));
+    final amount = _amountTrend(
+      feeds,
+      onSolids: onSolids,
+      // Nothing logged, but old enough that solids are the likeliest
+      // explanation — worth asking rather than worrying.
+      mightBeSolids: !onSolids && baby.ageInMonths >= _solidsFromMonths,
+      babyName: baby.name,
+    );
     if (amount != null && !recentlyRaised(RecommendationKind.amountTrend)) {
       return LivyRecommendation(
         id: const Uuid().v4(),
@@ -73,7 +89,12 @@ class RecommendationEngine {
   }
 
   /// Notices a sustained rise (or dip) in amounts per feed.
-  static String? _amountTrend(List<Feed> feeds) {
+  static String? _amountTrend(
+    List<Feed> feeds, {
+    bool onSolids = false,
+    bool mightBeSolids = false,
+    String babyName = 'your baby',
+  }) {
     if (feeds.length < 30) return null;
     final older = feeds.sublist(feeds.length - 30, feeds.length - 15);
     final newer = feeds.sublist(feeds.length - 15);
@@ -87,6 +108,24 @@ class RecommendationEngine {
           '${LivyRecommendation.disclaimer}';
     }
     if (change < -0.15) {
+      // Same numbers, opposite meaning. A household logging solids is watching
+      // meals fill in around the bottles; telling them to keep an eye on it
+      // would turn a milestone into a worry.
+      if (onSolids) {
+        return 'Bottles are getting smaller as meals fill in (about ${a0.round()} mL → '
+            '${a1.round()} mL per feed). That\'s the trade you\'d expect once solids '
+            'get going — the bottles usually stay, just smaller and further apart. '
+            '${LivyRecommendation.disclaimer}';
+      }
+      // Old enough for solids but none logged: the likeliest explanation is
+      // simply that meals are happening off the record.
+      if (mightBeSolids) {
+        return 'Bottles have been getting smaller lately (about ${a0.round()} mL → '
+            '${a1.round()} mL per feed). Has $babyName started solid meals? If so, '
+            'logging them lets Livy read this as meals filling in rather than a dip. '
+            'If solids haven\'t started, it may be worth a gentle eye. '
+            '${LivyRecommendation.disclaimer}';
+      }
       return 'Amounts have dipped a little recently (about ${a0.round()} mL → ${a1.round()} mL '
           'per feed). Appetites naturally ebb and flow — it may be worth keeping a gentle eye on. '
           '${LivyRecommendation.disclaimer}';

@@ -18,6 +18,8 @@ import 'repository.dart';
 ///                                            schedule, streaks, mascot, badges,
 ///                                            disclaimer acks)
 ///   households/{hid}/feeds/{feedId}
+///   households/{hid}/meals/{mealId}         — solid meals, deliberately apart
+///                                             from feeds (see [SolidMeal])
 ///   households/{hid}/recommendations/{id}
 ///   households/{hid}/formulaSwitches/{id}
 ///   users/{uid}                            — {householdId, name}
@@ -37,6 +39,7 @@ class FirestoreRepository implements LivyRepository {
 
   Household? _household;
   List<Feed> _feeds = const [];
+  List<SolidMeal> _meals = const [];
   List<LivyRecommendation> _recs = const [];
   List<FormulaSwitchEntry> _switches = const [];
   StreakState _streaks = const StreakState();
@@ -114,6 +117,19 @@ class FirestoreRepository implements LivyRepository {
       _rebuild();
     }));
 
+    // Solid meals: their own subcollection, so nothing here can reach the
+    // dial, the streaks, the rollups or the reminder function (which triggers
+    // on `feeds` writes only).
+    _subs.add(_hhDoc
+        .collection('meals')
+        .orderBy('time', descending: true)
+        .limit(300)
+        .snapshots()
+        .listen((snap) {
+      _meals = snap.docs.map((d) => SolidMeal.fromJson(d.data())).toList();
+      _rebuild();
+    }));
+
     _subs.add(_hhDoc
         .collection('recommendations')
         .orderBy('createdAt', descending: true)
@@ -152,6 +168,7 @@ class FirestoreRepository implements LivyRepository {
     _bundle = HouseholdBundle(
       household: hh,
       feeds: _feeds,
+      meals: _meals,
       recommendations: _recs,
       formulaSwitches: _switches,
       streaks: _streaks,
@@ -213,25 +230,38 @@ class FirestoreRepository implements LivyRepository {
     final invite = await _db.collection('invites').doc(inviteCode.trim().toUpperCase()).get();
     final hid = invite.data()?['householdId'] as String?;
     if (hid == null) return false;
-    final hhSnap = await _db.collection('households').doc(hid).get();
-    final hh = hhSnap.data();
-    if (hh == null) return false;
-    final caregivers = (hh['caregivers'] as List? ?? []);
-    if (caregivers.length >= Household.maxCaregivers &&
-        !caregivers.any((c) => (c as Map)['id'] == uid)) {
-      return false;
-    }
+
+    // Deliberately does NOT read households/{hid} first. The rules only allow
+    // members to read that doc, so a joiner asking about it is denied before
+    // they can join — which is exactly what silently broke this path. The
+    // seat limit is enforced server-side by the isJoiningSelf() rule instead.
     _name = name;
     final me = Caregiver(id: uid, name: name, role: CaregiverRole.caregiver, joinedAt: DateTime.now());
-    await _db.collection('households').doc(hid).update({
-      'caregivers': FieldValue.arrayUnion([me.toJson()]),
-      'memberIds': FieldValue.arrayUnion([uid]),
-    });
+    try {
+      await _db.collection('households').doc(hid).update({
+        'caregivers': FieldValue.arrayUnion([me.toJson()]),
+        'memberIds': FieldValue.arrayUnion([uid]),
+      });
+    } on FirebaseException {
+      // Household full, already a member, or the invite points at a household
+      // that no longer exists.
+      return false;
+    }
     await _db.collection('users').doc(uid).set({'householdId': hid, 'name': name});
     _householdId = hid;
     _listen();
     await _flushPendingToken();
     return true;
+  }
+
+  @override
+  Future<void> logMeal(SolidMeal meal) async {
+    unawaited(_hhDoc.collection('meals').doc(meal.id).set(meal.toJson()));
+  }
+
+  @override
+  Future<void> deleteMeal(String mealId) async {
+    await _hhDoc.collection('meals').doc(mealId).delete();
   }
 
   @override

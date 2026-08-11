@@ -65,6 +65,37 @@ class PurchaseService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Ties the RevenueCat customer to the Firebase account.
+  ///
+  /// Without this the entitlement is pinned to an anonymous per-install id, so
+  /// a subscriber reinstalling or signing in on a second device would be asked
+  /// to pay again and "Restore purchase" would find nothing. Safe to call more
+  /// than once — RevenueCat treats it as idempotent for the same id.
+  Future<void> identify(String uid) async {
+    if (demoMode || !_configured || uid.isEmpty) return;
+    try {
+      final result = await Purchases.logIn(uid);
+      _onCustomerInfo(result.customerInfo);
+    } catch (e) {
+      // Never block sign-in on this: a failed identify costs cross-device
+      // restore, not access. The entitlement listener still governs the gate.
+      _lastError = e.toString();
+      notifyListeners();
+    }
+  }
+
+  /// Drops back to an anonymous customer on sign-out so the next account on
+  /// this device doesn't inherit the previous one's entitlement.
+  Future<void> forgetUser() async {
+    if (demoMode || !_configured) return;
+    try {
+      _onCustomerInfo(await Purchases.logOut());
+    } catch (e) {
+      _lastError = e.toString();
+      notifyListeners();
+    }
+  }
+
   /// Purchases the household plan. In demo mode this simulates success so the
   /// full flow (paywall → celebration → onboarding) is demonstrable.
   Future<bool> purchase({bool annual = false}) async {

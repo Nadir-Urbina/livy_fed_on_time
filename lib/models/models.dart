@@ -438,20 +438,36 @@ class MascotState {
       );
 }
 
-/// Recorded the first time a caregiver views pediatrician-guide content.
+/// Which one-time notice was acknowledged.
+///
+/// [pediatricianGuide] is the original and stays the default so acks written
+/// before this enum existed keep meaning what they meant.
+enum DisclaimerKind { pediatricianGuide, solidsIntro }
+
+/// Recorded the first time a caregiver sees a one-time notice.
 @immutable
 class DisclaimerAcknowledgment {
-  const DisclaimerAcknowledgment({required this.caregiverId, required this.acknowledgedAt});
+  const DisclaimerAcknowledgment({
+    required this.caregiverId,
+    required this.acknowledgedAt,
+    this.kind = DisclaimerKind.pediatricianGuide,
+  });
 
   final String caregiverId;
   final DateTime acknowledgedAt;
+  final DisclaimerKind kind;
 
-  Map<String, dynamic> toJson() =>
-      {'caregiverId': caregiverId, 'acknowledgedAt': _ts(acknowledgedAt)};
+  Map<String, dynamic> toJson() => {
+        'caregiverId': caregiverId,
+        'acknowledgedAt': _ts(acknowledgedAt),
+        'kind': kind.name,
+      };
 
   factory DisclaimerAcknowledgment.fromJson(Map<String, dynamic> j) => DisclaimerAcknowledgment(
         caregiverId: j['caregiverId'] as String? ?? '',
         acknowledgedAt: _dt(j['acknowledgedAt']),
+        kind: DisclaimerKind.values.asNameMap()[j['kind']] ??
+            DisclaimerKind.pediatricianGuide,
       );
 }
 
@@ -508,5 +524,73 @@ class Household {
         schedule: schedule ?? this.schedule,
         inviteCode: inviteCode ?? this.inviteCode,
         createdAt: createdAt,
+      );
+}
+
+// ── Solid meals ──────────────────────────────────────────────────────────────
+
+/// How the meal went. Deliberately three coarse buckets — a tired parent
+/// spooning mashed pear at 6pm will not grade an appetite on a 10-point scale.
+enum MealReaction { loved, ateSome, refused }
+
+extension MealReactionLabel on MealReaction {
+  String get label => switch (this) {
+        MealReaction.loved => 'Loved it',
+        MealReaction.ateSome => 'Ate some',
+        MealReaction.refused => 'Not today',
+      };
+}
+
+/// A solid meal — purée, mashed veg, finger food.
+///
+/// Deliberately NOT a [Feed] and stored in its own collection. Bottles drive
+/// the dial, the reminder, the streaks, the rollups and every mL figure in
+/// Insights; a few spoonfuls of squash must touch none of that. Keeping the
+/// two apart means solids can never silently corrupt bottle math, and the
+/// reminder Cloud Function — scoped to the `feeds` subcollection — will never
+/// fire off a meal.
+@immutable
+class SolidMeal {
+  const SolidMeal({
+    required this.id,
+    required this.time,
+    required this.loggedById,
+    required this.loggedByName,
+    this.foods = const [],
+    this.reaction = MealReaction.ateSome,
+    this.note,
+  });
+
+  final String id;
+  final DateTime time;
+  final String loggedById;
+  final String loggedByName;
+
+  /// Free-form: 'pear', 'mashed potato', 'oatmeal'.
+  final List<String> foods;
+  final MealReaction reaction;
+  final String? note;
+
+  /// 'pear · sweet potato', or a gentle fallback when nothing was named.
+  String get foodLabel => foods.isEmpty ? 'a solid meal' : foods.join(' · ');
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'time': _ts(time),
+        'loggedById': loggedById,
+        'loggedByName': loggedByName,
+        'foods': foods,
+        'reaction': reaction.name,
+        'note': note,
+      };
+
+  factory SolidMeal.fromJson(Map<String, dynamic> j) => SolidMeal(
+        id: j['id'] as String,
+        time: _dt(j['time']),
+        loggedById: j['loggedById'] as String? ?? '',
+        loggedByName: j['loggedByName'] as String? ?? 'Someone',
+        foods: (j['foods'] as List? ?? const []).map((e) => '$e').toList(),
+        reaction: MealReaction.values.asNameMap()[j['reaction']] ?? MealReaction.ateSome,
+        note: j['note'] as String?,
       );
 }
