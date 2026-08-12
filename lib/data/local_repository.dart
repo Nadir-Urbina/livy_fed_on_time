@@ -113,11 +113,7 @@ class LocalRepository implements LivyRepository {
     await _persist();
   }
 
-  String _makeInviteCode(String babyName) {
-    final clean = babyName.toUpperCase().replaceAll(RegExp(r'[^A-Z]'), '');
-    final tail = const Uuid().v4().substring(0, 4).toUpperCase();
-    return 'LIVY-${clean.isEmpty ? 'BABY' : clean}-$tail';
-  }
+  String _makeInviteCode(String babyName) => makeInviteCode();
 
   @override
   Future<void> logFeed(Feed feed) => _mutate((b) {
@@ -213,6 +209,10 @@ class LocalRepository implements LivyRepository {
       household: b.household.copyWith(
           caregivers:
               b.household.caregivers.where((c) => c.id != caregiverId).toList())));
+
+  @override
+  Future<void> updateBaby(BabyProfile baby) =>
+      _mutate((b) => b.copyWith(household: b.household.copyWith(baby: baby)));
 
   @override
   Future<void> renameCurrentCaregiver(String name) async {

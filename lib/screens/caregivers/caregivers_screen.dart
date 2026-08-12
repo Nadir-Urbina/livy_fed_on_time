@@ -134,19 +134,15 @@ class CaregiversScreen extends StatelessWidget {
                   label: 'Share invite',
                   icon: Icons.ios_share_rounded,
                   onPressed: seatsLeft > 0
-                      // The code sits alone on its own line: in Messages a
-                      // long-press then selects just the code, instead of
-                      // dragging handles through a sentence. No livy:// link —
-                      // the scheme isn't registered, so tapping it failed.
+                      // Short and unhyphenated so a double-tap in Messages
+                      // grabs the whole code, on its own line so nothing else
+                      // comes with it. Everything the app can explain later
+                      // has been cut from here.
                       ? () => SharePlus.instance.share(ShareParams(
-                          text:
-                              'Join ${household.baby.name}\'s feeding circle on Livy — '
-                              'Fed On Time.\n\n'
-                              'Invite code:\n'
+                          text: 'Join me on Livy — Fed On Time.\n\n'
                               '$code\n\n'
-                              'Download Livy, and when setup asks about your baby, tap '
-                              '"Have an invite code?" and paste it in. You won\'t need a '
-                              'subscription — this household\'s plan covers you.'))
+                              'Download the app and enter that code when it asks '
+                              'about your baby. It\'s free for you.'))
                       : null,
                 ),
                 if (app.isDemo) ...[

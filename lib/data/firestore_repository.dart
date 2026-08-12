@@ -189,8 +189,7 @@ class FirestoreRepository implements LivyRepository {
   }) async {
     _name = caregiverName;
     final hid = const Uuid().v4();
-    final code =
-        'LIVY-${baby.name.toUpperCase().replaceAll(RegExp(r'[^A-Z]'), '')}-${const Uuid().v4().substring(0, 4).toUpperCase()}';
+    final code = makeInviteCode();
     final me = Caregiver(
       id: uid,
       name: caregiverName,
@@ -368,6 +367,13 @@ class FirestoreRepository implements LivyRepository {
           hh.caregivers.where((c) => c.id != caregiverId).map((c) => c.toJson()).toList(),
       'memberIds': FieldValue.arrayRemove([caregiverId]),
     }));
+  }
+
+  @override
+  Future<void> updateBaby(BabyProfile baby) async {
+    // Only the baby map changes; the invite code is independent of the name
+    // now, so renaming can never invalidate an invite already sent out.
+    await _hhDoc.update({'baby': baby.toJson()});
   }
 
   @override

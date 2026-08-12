@@ -351,15 +351,31 @@ class _SignInPageState extends State<_SignInPage> {
 
   /// Upgrades from the pre-auth local repository to real Firestore sync so
   /// the household created next lands in the cloud.
+  /// A caregiver's name is shown to *other people* — beside every feed they
+  /// log, and in the household list. 'You' reads fine on your own device and
+  /// absurd on anyone else's, so it is never used as a stored name.
+  static String _resolveName(User user, String typed) {
+    final t = typed.trim();
+    if (t.isNotEmpty) return t;
+    final display = user.displayName?.trim();
+    if (display != null && display.isNotEmpty) return display;
+    final email = user.email;
+    if (email != null && email.contains('@')) {
+      final local = email.split('@').first.trim();
+      if (local.isNotEmpty) {
+        return local[0].toUpperCase() + local.substring(1);
+      }
+    }
+    return 'Caregiver';
+  }
+
   Future<void> _completeAuth(User? user) async {
     if (user == null || !mounted) return;
     final app = context.read<AppState>();
     final purchases = context.read<PurchaseService>();
     await app.swapRepository(FirestoreRepository(
       uid: user.uid,
-      displayName: widget.nameController.text.trim().isEmpty
-          ? 'You'
-          : widget.nameController.text.trim(),
+      displayName: _resolveName(user, widget.nameController.text),
     ));
     // Identify before the paywall two screens later, so an existing subscriber
     // arrives already entitled instead of being asked to buy a second time.
@@ -574,7 +590,7 @@ class _BabyPage extends StatelessWidget {
           controller: controller,
           autofocus: true,
           textCapitalization: TextCapitalization.characters,
-          decoration: const InputDecoration(hintText: 'LIVY-BABY-XXXX'),
+          decoration: const InputDecoration(hintText: 'LIVYAB12CD'),
         ),
         actions: [
           TextButton(

@@ -131,6 +131,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
+          // Both of these were previously write-once at onboarding: a typo in
+          // a baby's name was permanent, and a caregiver had no way to fix
+          // how their own name appears to everyone else.
+          const SectionHeader('Baby & you'),
+          VoxelCard(
+            child: Column(
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text('Baby\'s name', style: LivyType.body(size: 15)),
+                  subtitle: Text(app.bundle?.household.baby.name ?? '—',
+                      style: LivyType.body(size: 12, color: LivyColors.mist)),
+                  trailing: app.isAccountHolder
+                      ? Icon(Icons.edit_rounded, size: 18, color: LivyColors.periwinkle)
+                      : null,
+                  onTap: app.isAccountHolder ? () => _editBabyName(context, app) : null,
+                ),
+                const Divider(),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text('Your name', style: LivyType.body(size: 15)),
+                  subtitle: Text(
+                      '${app.caregiverName} · shown beside every feed you log',
+                      style: LivyType.body(size: 12, color: LivyColors.mist)),
+                  trailing:
+                      Icon(Icons.edit_rounded, size: 18, color: LivyColors.periwinkle),
+                  onTap: () => _editMyName(context, app),
+                ),
+              ],
+            ),
+          ),
           const SectionHeader('Preferences'),
           VoxelCard(
             padding: EdgeInsets.zero,
@@ -410,6 +441,75 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     if (name != null && name.isNotEmpty) {
       await app.setMascot(mascotId: app.mascot.id, customName: name);
+    }
+  }
+
+  /// Shared shape for the two "fix a name" dialogs.
+  Future<String?> _promptForName({
+    required BuildContext context,
+    required String title,
+    required String label,
+    required String initial,
+    String? helper,
+  }) {
+    final controller = TextEditingController(text: initial);
+    return showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: LivyColors.surfaceRaised,
+        title: Text(title, style: LivyType.display(size: 20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: controller,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(labelText: label),
+            ),
+            if (helper != null) ...[
+              const SizedBox(height: LivySpace.sm),
+              Text(helper, style: LivyType.body(size: 12, color: LivyColors.faint)),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text('Cancel', style: LivyType.body(color: LivyColors.mist))),
+          TextButton(
+              onPressed: () =>
+                  Navigator.of(dialogContext).pop(controller.text.trim()),
+              child: const Text('Save')),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _editBabyName(BuildContext context, AppState app) async {
+    final baby = app.bundle?.household.baby;
+    if (baby == null) return;
+    final name = await _promptForName(
+      context: context,
+      title: 'Baby\'s name',
+      label: 'Name',
+      initial: baby.name,
+      helper: 'Everyone in the household sees this.',
+    );
+    if (name != null && name.isNotEmpty) await app.updateBaby(name: name);
+  }
+
+  Future<void> _editMyName(BuildContext context, AppState app) async {
+    final name = await _promptForName(
+      context: context,
+      title: 'Your name',
+      label: 'Your first name',
+      initial: app.caregiverName,
+      helper: 'This is how you appear to the rest of the household.',
+    );
+    if (name != null && name.isNotEmpty) {
+      await app.renameCurrentCaregiver(name);
     }
   }
 }

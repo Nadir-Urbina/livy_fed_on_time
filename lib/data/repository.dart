@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import '../models/badge_catalog.dart';
 import '../models/insights.dart';
 import '../models/models.dart';
@@ -104,6 +106,27 @@ class HouseholdBundle {
       );
 }
 
+/// Invite codes are one unbroken alphanumeric token on purpose.
+///
+/// Hyphens split a word for iOS text selection, so a hyphenated code cannot be
+/// grabbed with a double-tap in Messages — the recipient has to drag selection
+/// handles through it. One short token double-taps cleanly.
+///
+/// They are also random rather than derived from the baby's name. The old
+/// LIVY-OLIVIAURBINASALABLANCA-4895 form wrapped across lines, was miserable to
+/// read aloud or retype, put the child's full name into a Firestore document id
+/// that any signed-in user may read, and made the code guessable by anyone who
+/// knew the baby's name.
+///
+/// Alphabet omits I, O, 0 and 1 so nothing is ambiguous when read off a screen.
+String makeInviteCode() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  final rand = Random.secure();
+  final body =
+      List.generate(6, (_) => alphabet[rand.nextInt(alphabet.length)]).join();
+  return 'LIVY$body';
+}
+
 /// Backend abstraction. `LocalRepository` powers demo/offline mode;
 /// `FirestoreRepository` powers real multi-caregiver sync. The UI only ever
 /// talks to this interface (through AppState).
@@ -148,6 +171,10 @@ abstract class LivyRepository {
   Future<void> addCaregiver(Caregiver caregiver);
   Future<void> removeCaregiver(String caregiverId);
   Future<void> renameCurrentCaregiver(String name);
+
+  /// Corrects the baby's name or birth date after onboarding. Account holder
+  /// only, enforced in the UI.
+  Future<void> updateBaby(BabyProfile baby);
 
   Future<void> dispose();
 }

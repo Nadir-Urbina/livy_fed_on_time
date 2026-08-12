@@ -249,6 +249,19 @@ class AppState extends ChangeNotifier {
 
   Future<void> deleteMeal(String mealId) => repository.deleteMeal(mealId);
 
+  Future<void> updateBaby({String? name, DateTime? birthDate}) async {
+    final current = _bundle?.household.baby;
+    if (current == null) return;
+    await repository.updateBaby(BabyProfile(
+      name: name?.trim().isNotEmpty == true ? name!.trim() : current.name,
+      birthDate: birthDate ?? current.birthDate,
+      photoPath: current.photoPath,
+    ));
+  }
+
+  Future<void> renameCurrentCaregiver(String name) =>
+      repository.renameCurrentCaregiver(name.trim());
+
   /// Recomputes streaks/badges and lets Livy consider a recommendation.
   Future<void> _afterHistoryChange() async {
     final b = repository.bundle ?? _bundle;
