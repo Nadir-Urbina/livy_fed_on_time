@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/app_state.dart';
+import '../../data/health_sources.dart';
 import '../../models/models.dart';
 import '../../services/haptics.dart';
 import '../../services/sound_service.dart';
 import '../../theme/theme.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/citations.dart';
 import '../../widgets/common.dart';
+import '../guide/sources_screen.dart';
 
 /// Logging a solid meal — purée, mashed veg, finger food.
 ///
@@ -58,6 +61,10 @@ Future<bool?> _showSolidsIntro(BuildContext context, AppState app) {
               'source of nutrition through the first year.',
               style: LivyType.body(size: 14, color: LivyColors.mist),
             ),
+            const SizedBox(height: LivySpace.sm),
+            // Guideline 1.4.1: the paragraph above names the CDC and the AAP,
+            // so their documents are one tap away from the claim itself.
+            const InlineCitations(HealthSources.startingSolids, compact: true),
             if (months != null && months < 6) ...[
               const SizedBox(height: LivySpace.md),
               Text(
@@ -76,6 +83,11 @@ Future<bool?> _showSolidsIntro(BuildContext context, AppState app) {
         ),
       ),
       actions: [
+        TextButton(
+          onPressed: () => SourcesScreen.open(ctx),
+          child: Text('Read the sources',
+              style: LivyType.body(color: LivyColors.periwinkle)),
+        ),
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
           child: Text('Not now', style: LivyType.body(color: LivyColors.mist)),
@@ -293,6 +305,31 @@ class _LogMealSheetState extends State<_LogMealSheet> {
               label: 'Log meal',
               icon: Icons.restaurant_rounded,
               onPressed: _save,
+            ),
+            const SizedBox(height: LivySpace.md),
+            // The general guidance behind this screen (when solids usually
+            // start, safe first foods) stays cited on the screen itself, not
+            // only in the one-time dialog.
+            VoxelCard(
+              color: LivyColors.surfaceSunken,
+              padding: const EdgeInsets.all(LivySpace.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Livy records meals — she doesn\'t advise on them. General '
+                    'guidance on first foods, readiness signs and choking '
+                    'hazards comes from the CDC and the American Academy of '
+                    'Pediatrics; your pediatrician knows your baby.',
+                    style: LivyType.body(size: 12, color: LivyColors.mist),
+                  ),
+                  const SizedBox(height: LivySpace.sm),
+                  const InlineCitations(HealthSources.startingSolids,
+                      compact: true),
+                  const SizedBox(height: 2),
+                  const SourcesLink(label: 'All sources & references'),
+                ],
+              ),
             ),
             const SizedBox(height: LivySpace.sm),
           ],

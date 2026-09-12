@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/app_state.dart';
+import '../../data/health_sources.dart';
 import '../../models/models.dart';
 import '../../services/haptics.dart';
 import '../../theme/theme.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/citations.dart';
 import '../../widgets/common.dart';
 
 /// Manual scheduling with approval-gated changes: the account holder edits
@@ -148,12 +150,25 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ],
           const SectionHeader('How Livy uses this'),
           VoxelCard(
-            child: Text(
-              'The nightlight dial fills across this interval, reminders fire when a feed '
-              'comes due, and "on time" streaks count feeds landing within ±25 minutes of '
-              'it. As your baby grows and stretches their rhythm, Livy will gently point '
-              'out when the real pattern drifts away from this setting.',
-              style: LivyType.body(size: 14, color: LivyColors.mist),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'The nightlight dial fills across this interval, reminders fire when a feed '
+                  'comes due, and "on time" streaks count feeds landing within ±25 minutes of '
+                  'it. As your baby grows and stretches their rhythm, Livy will gently point '
+                  'out when the real pattern drifts away from this setting.',
+                  style: LivyType.body(size: 14, color: LivyColors.mist),
+                ),
+                const SizedBox(height: LivySpace.sm),
+                Text(
+                  'You choose this interval — Livy never sets it for you. General '
+                  'guidance on how feeding amounts and intervals change with age:',
+                  style: LivyType.body(size: 12, color: LivyColors.faint),
+                ),
+                const SizedBox(height: LivySpace.xs),
+                const InlineCitations(HealthSources.bottleFeeding),
+              ],
             ),
           ),
         ],

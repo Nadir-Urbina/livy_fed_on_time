@@ -95,6 +95,27 @@ demonstrable offline. Demo data persists across restarts; reset it from
    time-sensitive interruption level; iOS mirrors them to a paired watch
    automatically (the proven Flutter→Watch path; no native watch target needed).
 
+## Health information & citations
+
+App Store guideline 1.4.1 requires that any health or medical information an
+app shows carries findable citations. Livy is a notebook, not a clinician, but
+she does repeat general public-health guidance in a few places, so:
+
+- `lib/data/health_sources.dart` is the **single source of truth** for every
+  citation — publisher, document title, URL, and what it is cited for, grouped
+  by topic (starting solids / bottle amounts & intervals / formula safety).
+- `lib/widgets/citations.dart` renders them: `InlineCitations` sits directly
+  beneath a claim, `CitationCard` is the full listing entry, `SourcesLink`
+  routes into the list.
+- `lib/screens/guide/sources_screen.dart` is the full list. It is reachable
+  from the Care hub, Settings → About, the `DisclaimerFooter` under every
+  guidance surface, the solids dialog, and the pediatrician-guide gate.
+
+**Rule for new copy:** if a string states general guidance rather than the
+household's own logged data, it needs an `InlineCitations` next to it and an
+entry in `HealthSources`. `test/health_sources_test.dart` guards the catalog
+and asserts every citation renders on the sources screen.
+
 ## Insights & analytics
 
 The Insights tab reads **daily rollups**, not raw feeds, so a household's

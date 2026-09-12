@@ -3,10 +3,12 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/app_state.dart';
+import '../../data/health_sources.dart';
 import '../../models/mascots.dart';
 import '../../models/models.dart';
 import '../../theme/theme.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/citations.dart';
 import '../../widgets/common.dart';
 import '../../widgets/mascot_view.dart';
 import '../schedule/schedule_screen.dart';
@@ -31,11 +33,19 @@ class RecommendationsScreen extends StatelessWidget {
         children: [
           VoxelCard(
             color: LivyColors.surfaceSunken,
-            child: Text(
-              'These are gentle observations from your own feeding log, grounded in '
-              'general pediatric guidance — never a diagnosis or an instruction. '
-              'The schedule only changes when you change it.',
-              style: LivyType.body(size: 13, color: LivyColors.mist),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'These are gentle observations from your own feeding log, grounded in '
+                  'general pediatric guidance — never a diagnosis or an instruction. '
+                  'The schedule only changes when you change it.',
+                  style: LivyType.body(size: 13, color: LivyColors.mist),
+                ),
+                const SizedBox(height: LivySpace.sm),
+                // The "general pediatric guidance" named above, cited.
+                const InlineCitations(HealthSources.bottleFeeding),
+              ],
             ),
           ),
           if (active.isEmpty && past.isEmpty)

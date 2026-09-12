@@ -15,6 +15,7 @@ import '../../theme/theme_controller.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/common.dart';
 import '../../widgets/mascot_view.dart';
+import '../guide/sources_screen.dart';
 
 /// Mascot picker (rename or reskin Livy — the granny is always available),
 /// units, sounds, notifications, and demo utilities.
@@ -249,6 +250,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: EdgeInsets.zero,
             child: Column(
               children: [
+                ListTile(
+                  leading: Icon(Icons.menu_book_outlined, color: LivyColors.mist),
+                  title: Text('Health information sources',
+                      style: LivyType.body(size: 15)),
+                  subtitle: Text(
+                      'Citations for the general guidance Livy shows',
+                      style: LivyType.body(size: 12, color: LivyColors.faint)),
+                  trailing: Icon(Icons.chevron_right_rounded,
+                      size: 20, color: LivyColors.faint),
+                  onTap: () => SourcesScreen.open(context),
+                ),
+                const Divider(),
                 ListTile(
                   leading: Icon(Icons.privacy_tip_outlined, color: LivyColors.mist),
                   title: Text('Privacy Policy', style: LivyType.body(size: 15)),

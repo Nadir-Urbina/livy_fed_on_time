@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../screens/guide/sources_screen.dart';
 import '../services/haptics.dart';
 import '../services/sound_service.dart';
 import '../theme/theme.dart';
@@ -116,7 +117,8 @@ class NumberRollup extends StatelessWidget {
 }
 
 /// The persistent medical framing required anywhere guide/recommendation
-/// content appears. Never remove.
+/// content appears, plus the link to the sources behind that information.
+/// Never remove either half.
 class DisclaimerFooter extends StatelessWidget {
   const DisclaimerFooter({super.key});
 
@@ -137,11 +139,42 @@ class DisclaimerFooter extends StatelessWidget {
           Icon(Icons.favorite_rounded, size: 16, color: LivyColors.coral),
           const SizedBox(width: LivySpace.sm),
           Expanded(
-            child: Text(
-              'Livy organizes your own notes and shares general information only — she never '
-              'diagnoses, prescribes, or replaces medical care. Always talk with your '
-              'pediatrician about your baby\'s health.',
-              style: LivyType.body(size: 12, color: LivyColors.mist),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Livy organizes your own notes and shares general information only — she never '
+                  'diagnoses, prescribes, or replaces medical care. Always talk with your '
+                  'pediatrician about your baby\'s health.',
+                  style: LivyType.body(size: 12, color: LivyColors.mist),
+                ),
+                const SizedBox(height: LivySpace.xs),
+                // Guideline 1.4.1: wherever the disclaimer appears, the
+                // citations behind the general information are one tap away.
+                InkWell(
+                  borderRadius: BorderRadius.circular(LivyRadius.sm),
+                  onTap: () => SourcesScreen.open(context),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.menu_book_outlined,
+                            size: 14, color: LivyColors.periwinkle),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Sources & references',
+                          style: LivyType.body(
+                            size: 12,
+                            color: LivyColors.periwinkle,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

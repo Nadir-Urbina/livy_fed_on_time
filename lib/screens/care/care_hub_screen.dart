@@ -11,6 +11,7 @@ import '../caregivers/caregivers_screen.dart';
 import '../guide/pediatrician_guide_screen.dart';
 import '../guide/recommendations_screen.dart';
 import '../journal/formula_journal_screen.dart';
+import '../guide/sources_screen.dart';
 import '../recalls/recalls_screen.dart';
 import '../settings/settings_screen.dart';
 
@@ -80,6 +81,13 @@ class CareHubScreen extends StatelessWidget {
             title: 'Caregivers',
             subtitle: '$caregivers of 5 household seats in use',
             builder: (_) => const CaregiversScreen(),
+          ),
+          _HubTile(
+            icon: Icons.menu_book_outlined,
+            color: LivyColors.butter,
+            title: 'Sources & references',
+            subtitle: 'Where Livy\'s general guidance comes from',
+            builder: (_) => const SourcesScreen(),
           ),
           _HubTile(
             icon: Icons.tune_rounded,

@@ -10,6 +10,7 @@ import '../../theme/theme.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/common.dart';
 import '../../widgets/mascot_view.dart';
+import 'sources_screen.dart';
 
 /// Symptom log → pediatrician conversation guide. Compiles the caregiver's own
 /// recent entries into a clean, shareable summary with talking-point prompts.
@@ -54,6 +55,11 @@ class _PediatricianGuideScreenState extends State<PediatricianGuideScreen> {
           style: LivyType.body(size: 14, color: LivyColors.mist),
         ),
         actions: [
+          TextButton(
+            onPressed: () => SourcesScreen.open(dialogContext),
+            child: Text('Sources',
+                style: LivyType.body(color: LivyColors.periwinkle)),
+          ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text('Go back', style: LivyType.body(color: LivyColors.mist)),

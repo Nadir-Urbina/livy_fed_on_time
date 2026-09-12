@@ -3,10 +3,12 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/app_state.dart';
+import '../../data/health_sources.dart';
 import '../../models/mascots.dart';
 import '../../models/models.dart';
 import '../../theme/theme.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/citations.dart';
 import '../../widgets/common.dart';
 
 /// FDA recall alerts, matched to the household's logged formula brands, with
@@ -114,6 +116,8 @@ class _RecallsScreenState extends State<RecallsScreen> {
               'the product packaging directly if you suspect a recall.',
               style: LivyType.body(size: 11, color: LivyColors.faint),
             ),
+            const SizedBox(height: LivySpace.sm),
+            const InlineCitations(HealthSources.formulaSafety, compact: true),
           ],
         ),
       ),
