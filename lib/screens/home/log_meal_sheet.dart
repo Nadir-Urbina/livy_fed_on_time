@@ -61,10 +61,15 @@ Future<bool?> _showSolidsIntro(BuildContext context, AppState app) {
               'source of nutrition through the first year.',
               style: LivyType.body(size: 14, color: LivyColors.mist),
             ),
-            const SizedBox(height: LivySpace.sm),
-            // Guideline 1.4.1: the paragraph above names the CDC and the AAP,
-            // so their documents are one tap away from the claim itself.
-            const InlineCitations(HealthSources.startingSolids, compact: true),
+            const SizedBox(height: LivySpace.md),
+            // Guideline 1.4.1: the paragraph above is general health guidance,
+            // so the documents behind it are named and linked right under it —
+            // written out in full, not abbreviated into chips.
+            const SourcesPanel(
+              citations: HealthSources.startingSolids,
+              title: 'Sources for this guidance',
+              showAllSourcesLink: false,
+            ),
             if (months != null && months < 6) ...[
               const SizedBox(height: LivySpace.md),
               Text(
@@ -83,10 +88,13 @@ Future<bool?> _showSolidsIntro(BuildContext context, AppState app) {
         ),
       ),
       actions: [
-        TextButton(
+        TextButton.icon(
           onPressed: () => SourcesScreen.open(ctx),
-          child: Text('Read the sources',
-              style: LivyType.body(color: LivyColors.periwinkle)),
+          icon: Icon(Icons.menu_book_rounded,
+              size: 16, color: LivyColors.periwinkle),
+          label: Text('Read the sources',
+              style: LivyType.body(
+                  color: LivyColors.periwinkle, weight: FontWeight.w700)),
         ),
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
@@ -192,7 +200,26 @@ class _LogMealSheetState extends State<_LogMealSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: LivySpace.md),
-            Text('Log a meal', style: LivyType.display(size: 24)),
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Log a meal', style: LivyType.display(size: 24)),
+                ),
+                // Standing route to the citations, visible the moment the
+                // sheet opens — the one-time dialog above can't be the only
+                // place they appear.
+                TextButton.icon(
+                  onPressed: () => SourcesScreen.open(context),
+                  icon: Icon(Icons.menu_book_rounded,
+                      size: 16, color: LivyColors.periwinkle),
+                  label: Text('Sources',
+                      style: LivyType.body(
+                          size: 13,
+                          color: LivyColors.periwinkle,
+                          weight: FontWeight.w700)),
+                ),
+              ],
+            ),
             const SizedBox(height: LivySpace.xs),
             Text(
               'for $baby · logged by ${app.caregiverName}',
@@ -202,6 +229,23 @@ class _LogMealSheetState extends State<_LogMealSheet> {
             Text(
               'Solids sit alongside bottles — this won\'t change the feed countdown.',
               style: LivyType.body(size: 12, color: LivyColors.faint),
+            ),
+
+            const SizedBox(height: LivySpace.md),
+            // Guideline 1.4.1. Everything general this screen says about first
+            // foods — the readiness age, the foods offered as chips below, the
+            // choking-hazard framing — is public health guidance, so its
+            // sources are cited here, above the form and above the save
+            // button, where they cannot be scrolled past.
+            const SourcesPanel(
+              citations: HealthSources.startingSolids,
+              title: 'Sources for the feeding information on this screen',
+              blurb: 'Livy records meals — she doesn\'t advise on them. The '
+                  'general guidance behind this screen (when solids usually '
+                  'start, readiness signs, safe first foods and choking '
+                  'hazards) comes from the CDC and the American Academy of '
+                  'Pediatrics. Tap a source to read the original; your '
+                  'pediatrician knows your baby.',
             ),
             const SizedBox(height: LivySpace.lg),
 
@@ -307,9 +351,8 @@ class _LogMealSheetState extends State<_LogMealSheet> {
               onPressed: _save,
             ),
             const SizedBox(height: LivySpace.md),
-            // The general guidance behind this screen (when solids usually
-            // start, safe first foods) stays cited on the screen itself, not
-            // only in the one-time dialog.
+            // A second copy of the attribution, for anyone who reads bottom-up.
+            // The panel above the form is the one that has to carry it.
             VoxelCard(
               color: LivyColors.surfaceSunken,
               padding: const EdgeInsets.all(LivySpace.md),
@@ -317,10 +360,9 @@ class _LogMealSheetState extends State<_LogMealSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Livy records meals — she doesn\'t advise on them. General '
-                    'guidance on first foods, readiness signs and choking '
-                    'hazards comes from the CDC and the American Academy of '
-                    'Pediatrics; your pediatrician knows your baby.',
+                    'Livy never diagnoses, prescribes, or replaces medical '
+                    'care. The general feeding guidance she repeats is cited '
+                    'to its sources.',
                     style: LivyType.body(size: 12, color: LivyColors.mist),
                   ),
                   const SizedBox(height: LivySpace.sm),

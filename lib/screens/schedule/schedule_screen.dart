@@ -160,14 +160,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   'out when the real pattern drifts away from this setting.',
                   style: LivyType.body(size: 14, color: LivyColors.mist),
                 ),
-                const SizedBox(height: LivySpace.sm),
-                Text(
-                  'You choose this interval — Livy never sets it for you. General '
-                  'guidance on how feeding amounts and intervals change with age:',
-                  style: LivyType.body(size: 12, color: LivyColors.faint),
+                const SizedBox(height: LivySpace.md),
+                const SourcesPanel(
+                  citations: HealthSources.bottleFeeding,
+                  title: 'Sources for the feeding information on this screen',
+                  blurb: 'You choose this interval — Livy never sets it for '
+                      'you. The general guidance on how feeding amounts and '
+                      'intervals change with age comes from:',
                 ),
-                const SizedBox(height: LivySpace.xs),
-                const InlineCitations(HealthSources.bottleFeeding),
               ],
             ),
           ),

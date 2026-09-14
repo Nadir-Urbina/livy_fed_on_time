@@ -42,9 +42,12 @@ class RecommendationsScreen extends StatelessWidget {
                   'The schedule only changes when you change it.',
                   style: LivyType.body(size: 13, color: LivyColors.mist),
                 ),
-                const SizedBox(height: LivySpace.sm),
-                // The "general pediatric guidance" named above, cited.
-                const InlineCitations(HealthSources.bottleFeeding),
+                const SizedBox(height: LivySpace.md),
+                // The "general pediatric guidance" named above, cited in full.
+                const SourcesPanel(
+                  citations: HealthSources.bottleFeeding,
+                  title: 'Sources for the guidance behind these observations',
+                ),
               ],
             ),
           ),
