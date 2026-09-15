@@ -240,12 +240,8 @@ class _LogMealSheetState extends State<_LogMealSheet> {
             const SourcesPanel(
               citations: HealthSources.startingSolids,
               title: 'Sources for the feeding information on this screen',
-              blurb: 'Livy records meals — she doesn\'t advise on them. The '
-                  'general guidance behind this screen (when solids usually '
-                  'start, readiness signs, safe first foods and choking '
-                  'hazards) comes from the CDC and the American Academy of '
-                  'Pediatrics. Tap a source to read the original; your '
-                  'pediatrician knows your baby.',
+              blurb: 'When solids usually start, readiness signs, safe '
+                  'first foods and choking hazards. Tap a source to read it.',
             ),
             const SizedBox(height: LivySpace.lg),
 

@@ -118,7 +118,7 @@ class CitationReference extends StatelessWidget {
         borderRadius: BorderRadius.circular(LivyRadius.sm),
         onTap: () => openCitation(context, citation),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: LivySpace.xs),
+          padding: const EdgeInsets.symmetric(vertical: 3),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -134,15 +134,19 @@ class CitationReference extends StatelessWidget {
                   children: [
                     Text(
                       '${citation.publisher} — ${citation.title}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: LivyType.body(
                         size: 13,
                         weight: FontWeight.w600,
                         color: LivyColors.periwinkle,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
                       citation.url,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: LivyType.body(size: 11, color: LivyColors.faint)
                           .copyWith(
                         decoration: TextDecoration.underline,
@@ -318,12 +322,15 @@ class SourcesLink extends StatelessWidget {
           children: [
             Icon(Icons.menu_book_outlined, size: 14, color: LivyColors.periwinkle),
             const SizedBox(width: 4),
-            Text(
-              label,
-              style: LivyType.body(
-                size: 12,
-                color: LivyColors.periwinkle,
-                weight: FontWeight.w600,
+            // Narrow phones ran this label off the edge of the sources panel.
+            Flexible(
+              child: Text(
+                label,
+                style: LivyType.body(
+                  size: 12,
+                  color: LivyColors.periwinkle,
+                  weight: FontWeight.w600,
+                ),
               ),
             ),
           ],
