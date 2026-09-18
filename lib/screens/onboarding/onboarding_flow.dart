@@ -858,7 +858,7 @@ class _PaywallPageState extends State<_PaywallPage> {
             child: _PlanChip(
               title: 'Yearly',
               price: purchases.annualPriceLabel,
-              note: 'save about 33%',
+              note: 'per year · save about 33%',
               selected: _annual,
               onTap: () => setState(() => _annual = true),
             ),
@@ -868,7 +868,7 @@ class _PaywallPageState extends State<_PaywallPage> {
             child: _PlanChip(
               title: 'Monthly',
               price: purchases.monthlyPriceLabel,
-              note: 'cancel anytime',
+              note: 'per month',
               selected: !_annual,
               onTap: () => setState(() => _annual = false),
             ),
@@ -880,11 +880,21 @@ class _PaywallPageState extends State<_PaywallPage> {
               ? 'One moment…'
               : purchases.demoMode
                   ? 'Unlock (demo purchase)'
-                  : purchases.hasIntroTrial
-                      ? 'Start 7-day free trial'
+                  : purchases.hasFreeTrial(annual: _annual)
+                      ? 'Start ${purchases.trialAdjectiveLabel(annual: _annual)} free trial'
                       : 'Unlock Livy',
           icon: Icons.lock_open_rounded,
           onPressed: _busy ? null : _buy,
+        ),
+        const SizedBox(height: LivySpace.sm),
+        // Guideline 3.1.2(c): the trial's length and the amount charged when
+        // it ends belong in the purchase flow itself, at a size someone will
+        // actually read — not folded into the fine print below as "the
+        // selected price".
+        Text(
+          purchases.subscriptionTerms(annual: _annual),
+          textAlign: TextAlign.center,
+          style: LivyType.body(size: 13, color: LivyColors.cream),
         ),
         TextButton(
           onPressed: _busy
@@ -896,12 +906,10 @@ class _PaywallPageState extends State<_PaywallPage> {
           child: const Text('Restore purchase'),
         ),
         Text(
-          'Caregivers you invite don\'t pay — one subscription covers the household, '
-          'and joining via an invite code needs no plan at all. New subscribers get '
-          '7 days free; the plan then renews automatically at the selected price '
-          'until cancelled in iOS Settings.',
+          'Caregivers you invite don\'t pay — one subscription covers the '
+          'household, and joining via an invite code needs no plan at all.',
           textAlign: TextAlign.center,
-          style: LivyType.body(size: 11, color: LivyColors.faint),
+          style: LivyType.body(size: 12, color: LivyColors.mist),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
