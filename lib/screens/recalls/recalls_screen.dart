@@ -117,7 +117,10 @@ class _RecallsScreenState extends State<RecallsScreen> {
               style: LivyType.body(size: 11, color: LivyColors.faint),
             ),
             const SizedBox(height: LivySpace.sm),
-            const InlineCitations(HealthSources.formulaSafety, compact: true),
+            const SourcesPanel(
+              citations: HealthSources.formulaSafety,
+              title: 'Sources for these recall notices',
+            ),
           ],
         ),
       ),

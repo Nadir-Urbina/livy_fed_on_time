@@ -171,6 +171,21 @@ class PurchaseService extends ChangeNotifier {
   String get annualPriceLabel =>
       _offerings?.current?.annual?.storeProduct.priceString ?? r'$39.99';
 
+  String priceLabel({required bool annual}) =>
+      annual ? annualPriceLabel : monthlyPriceLabel;
+
+  /// "year" / "month" — the billing period the price above is charged over.
+  /// Guideline 3.1.2(c): a price with no period attached is exactly the kind
+  /// of ambiguity the purchase flow is not allowed to leave.
+  String periodLabel({required bool annual}) => annual ? 'year' : 'month';
+
+  IntroductoryPrice? _introFor({required bool annual}) {
+    final o = _offerings?.current;
+    final product =
+        annual ? o?.annual?.storeProduct : o?.monthly?.storeProduct;
+    return product?.introductoryPrice;
+  }
+
   /// Whether the storefront products carry a free-trial introductory offer
   /// (the launch config includes 7 days free). When offerings haven't loaded
   /// yet (debug / RevenueCat unreachable) we assume the launch config so the
@@ -181,5 +196,69 @@ class PurchaseService extends ChangeNotifier {
         o?.monthly?.storeProduct.introductoryPrice;
     if (intro == null) return o == null;
     return intro.price == 0;
+  }
+
+  bool hasFreeTrial({required bool annual}) {
+    final o = _offerings?.current;
+    if (o == null) return true; // launch config, per hasIntroTrial above
+    final intro = _introFor(annual: annual);
+    return intro != null && intro.price == 0;
+  }
+
+  /// Length of the free trial, read from the store product rather than
+  /// hardcoded — if the offer in App Store Connect changes, the copy in the
+  /// purchase flow must change with it or it becomes a 3.1.2(c) problem.
+  /// Falls back to the launch configuration (7 days) when offerings are
+  /// unavailable.
+  (int, PeriodUnit) trialPeriod({required bool annual}) {
+    final intro = _introFor(annual: annual);
+    if (intro == null || intro.price != 0) return (7, PeriodUnit.day);
+    final units = intro.periodNumberOfUnits * (intro.cycles < 1 ? 1 : intro.cycles);
+    if (units < 1 || intro.periodUnit == PeriodUnit.unknown) {
+      return (7, PeriodUnit.day);
+    }
+    return (units, intro.periodUnit);
+  }
+
+  static String _unitWord(PeriodUnit unit, {required bool plural}) {
+    final word = switch (unit) {
+      PeriodUnit.day => 'day',
+      PeriodUnit.week => 'week',
+      PeriodUnit.month => 'month',
+      PeriodUnit.year => 'year',
+      PeriodUnit.unknown => 'day',
+    };
+    return plural ? '${word}s' : word;
+  }
+
+  /// "7 days" — for prose.
+  String trialLengthLabel({required bool annual}) {
+    final (n, unit) = trialPeriod(annual: annual);
+    return '$n ${_unitWord(unit, plural: n != 1)}';
+  }
+
+  /// "7-day" — for the button label.
+  String trialAdjectiveLabel({required bool annual}) {
+    final (n, unit) = trialPeriod(annual: annual);
+    return '$n-${_unitWord(unit, plural: false)}';
+  }
+
+  /// The full subscription terms for the selected plan, stated plainly.
+  ///
+  /// Guideline 3.1.2(c) requires the purchase flow to say how long a free
+  /// trial runs and what is billed when it ends. Kept here, not in the widget,
+  /// so it can be asserted in tests.
+  String subscriptionTerms({required bool annual}) {
+    final price = priceLabel(annual: annual);
+    final period = periodLabel(annual: annual);
+    if (!hasFreeTrial(annual: annual)) {
+      return '$price per $period, billed through your Apple Account. '
+          'Renews automatically until cancelled in iOS Settings.';
+    }
+    return 'Free for ${trialLengthLabel(annual: annual)}, then $price per '
+        '$period. Payment is charged to your Apple Account when the trial '
+        'ends, and renews automatically each $period unless cancelled at '
+        'least 24 hours before the period ends. Manage or cancel in iOS '
+        'Settings.';
   }
 }

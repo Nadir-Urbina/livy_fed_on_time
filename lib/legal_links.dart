@@ -8,11 +8,28 @@ abstract final class LegalLinks {
       'https://livy-fed-on-time.web.app/privacy.html';
   static const termsOfUse = 'https://livy-fed-on-time.web.app/terms.html';
 
-  static Future<void> open(String url) async {
-    try {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } catch (_) {
-      // A dead link should never crash a settings tap.
+  /// Opens [url], returning whether a browser actually took it.
+  ///
+  /// Citations are only citations if the link works, so this doesn't settle
+  /// for one attempt: an external browser is the nicest outcome, but a device
+  /// that refuses it still gets the in-app browser rather than a dead tap.
+  /// Callers that can show UI use the returned value to surface the URL when
+  /// every mode fails.
+  static Future<bool> open(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return false;
+    const modes = [
+      LaunchMode.externalApplication,
+      LaunchMode.platformDefault,
+      LaunchMode.inAppBrowserView,
+    ];
+    for (final mode in modes) {
+      try {
+        if (await launchUrl(uri, mode: mode)) return true;
+      } catch (_) {
+        // Try the next mode; a dead link should never crash a tap.
+      }
     }
+    return false;
   }
 }
