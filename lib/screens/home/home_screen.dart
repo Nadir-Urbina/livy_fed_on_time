@@ -13,6 +13,8 @@ import '../../services/sound_service.dart';
 import '../../theme/theme.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/celebration_overlay.dart';
+import '../../widgets/review_prompt.dart';
+import '../../services/review_prompt_service.dart';
 import '../../widgets/common.dart';
 import '../../widgets/mascot_view.dart';
 import '../schedule/schedule_screen.dart';
@@ -46,15 +48,37 @@ class _HomeScreenState extends State<HomeScreen> {
     switch (event) {
       case FeedLoggedEvent(:final onTime):
         _react(onTime ? MascotPose.proud : MascotPose.idle);
-        if (onTime) setState(() => _confettiTrigger++);
+        if (onTime) {
+          setState(() => _confettiTrigger++);
+          _maybeAskForReview();
+        }
       case TagTeamEvent():
         _react(MascotPose.delighted);
         setState(() => _confettiTrigger++);
+        _maybeAskForReview();
       case BadgeUnlockedEvent(:final badge):
         final app = context.read<AppState>();
         showBadgeCelebration(context,
             badge: badge, mascot: app.mascot, mascotName: app.mascotName);
     }
+  }
+
+  /// Rides on a moment that already went well — an on-time feed or a clean
+  /// handoff — and only if the service says this household has earned the
+  /// question. Badge unlocks are deliberately not used: they open their own
+  /// dialog, and stacking a second one on top of it would be graceless.
+  void _maybeAskForReview() {
+    final app = context.read<AppState>();
+    if (!ReviewPromptService.instance
+        .shouldAsk(feedCount: app.lifetimeFeedCount)) {
+      return;
+    }
+    // Let the confetti land first. The ask should feel like an afterthought to
+    // the good moment, not an interruption of it.
+    Future.delayed(const Duration(milliseconds: 3500), () {
+      if (!mounted) return;
+      showReviewPrompt(context);
+    });
   }
 
   void _react(MascotPose pose) {

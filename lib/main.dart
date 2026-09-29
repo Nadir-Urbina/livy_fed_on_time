@@ -13,6 +13,7 @@ import 'firebase_options.dart';
 import 'screens/onboarding/onboarding_flow.dart';
 import 'screens/shell.dart';
 import 'services/notification_service.dart';
+import 'services/review_prompt_service.dart';
 import 'services/purchase_service.dart';
 import 'theme/theme.dart';
 import 'theme/theme_controller.dart';
@@ -62,6 +63,7 @@ Future<void> main() async {
   }
 
   await NotificationService.instance.init();
+  await ReviewPromptService.instance.init();
 
   runApp(LivyApp(
     appState: appState,

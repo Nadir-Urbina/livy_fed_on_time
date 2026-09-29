@@ -327,6 +327,23 @@ class AppState extends ChangeNotifier {
   bool get hasAcknowledgedDisclaimer =>
       hasAcknowledged(DisclaimerKind.pediatricianGuide);
 
+  /// Every feed this household has ever logged.
+  ///
+  /// [HouseholdBundle.feeds] only holds the live window, so older history has
+  /// to come from the stored daily rollups — otherwise a household that has
+  /// used Livy for months looks brand new.
+  int get lifetimeFeedCount {
+    final b = _bundle;
+    if (b == null) return 0;
+    return b.feeds.length +
+        b.rollups.fold<int>(0, (sum, r) => sum + r.count);
+  }
+
+  /// Passes written feedback to the backend. Deliberately returns as soon as
+  /// the write is handed off — see [LivyRepository.submitFeedback].
+  Future<void> submitFeedback(String message) =>
+      repository.submitFeedback(message);
+
   Future<void> createHousehold({
     required String caregiverName,
     required BabyProfile baby,

@@ -168,6 +168,11 @@ abstract class LivyRepository {
   Future<void> saveMascot(MascotState mascot);
   Future<void> addDisclaimerAck(DisclaimerAcknowledgment ack);
 
+  /// Free-text feedback from the "how's it going?" prompt. Fire-and-forget:
+  /// a caregiver who took the time to write should never be made to wait on
+  /// a network round trip, and a failure here is not worth an error dialog.
+  Future<void> submitFeedback(String message);
+
   Future<void> addCaregiver(Caregiver caregiver);
   Future<void> removeCaregiver(String caregiverId);
   Future<void> renameCurrentCaregiver(String name);

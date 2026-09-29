@@ -55,6 +55,7 @@ dependencies:
   flutter_timezone: ^5.1.0
   cloud_functions: ^6.3.5
   url_launcher: ^6.3.2
+  in_app_review: ^2.0.10
   http: ^1.6.0
 
 dev_dependencies:

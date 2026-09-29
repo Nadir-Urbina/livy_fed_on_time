@@ -197,6 +197,12 @@ class LocalRepository implements LivyRepository {
           : b.copyWith(disclaimerAcks: [...b.disclaimerAcks, ack]));
 
   @override
+  /// Demo and offline mode have no backend to post to. Feedback written here
+  /// is acknowledged in the UI and goes no further — which is the honest
+  /// outcome for a mode that is, by definition, not connected to anything.
+  Future<void> submitFeedback(String message) async {}
+
+  @override
   Future<void> addCaregiver(Caregiver caregiver) => _mutate((b) {
         if (b.household.caregivers.length >= Household.maxCaregivers) return b;
         return b.copyWith(

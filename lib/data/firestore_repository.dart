@@ -352,6 +352,18 @@ class FirestoreRepository implements LivyRepository {
   }
 
   @override
+  Future<void> submitFeedback(String message) async {
+    // Top-level, not under the household: this is about the app, not the baby,
+    // and it outlives any one household document.
+    unawaited(_db.collection('feedback').add({
+      'message': message,
+      'uid': uid,
+      'householdId': _householdId,
+      'submittedAt': FieldValue.serverTimestamp(),
+    }));
+  }
+
+  @override
   Future<void> addCaregiver(Caregiver caregiver) async {
     unawaited(_hhDoc.update({
       'caregivers': FieldValue.arrayUnion([caregiver.toJson()])
