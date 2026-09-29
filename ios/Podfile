@@ -39,5 +39,16 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    # Some plugins still ship deployment targets below what current Xcode will
+    # accept, which fails the build outright rather than warning. The app is
+    # iOS 15+ anyway (see `platform` above), so hold every pod to the same
+    # floor instead of inheriting whatever each plugin declares.
+    target.build_configurations.each do |config|
+      current = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f
+      if current < 15.0
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      end
+    end
   end
 end
