@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../build_flags.dart';
 import '../../data/app_state.dart';
 import '../../models/models.dart';
 import '../../services/haptics.dart';
@@ -145,7 +146,7 @@ class CaregiversScreen extends StatelessWidget {
                               'about your baby. It\'s free for you.'))
                       : null,
                 ),
-                if (app.isDemo) ...[
+                if (app.isDemo && !kScreenshotMode) ...[
                   const SizedBox(height: LivySpace.sm),
                   TextButton.icon(
                     onPressed: seatsLeft > 0

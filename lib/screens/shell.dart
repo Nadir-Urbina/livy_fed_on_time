@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../build_flags.dart';
 import '../data/app_state.dart';
 import '../theme/tokens.dart';
 import 'badges/badges_screen.dart';
@@ -10,6 +11,7 @@ import 'care/care_hub_screen.dart';
 import 'history/history_screen.dart';
 import 'insights/insights_screen.dart';
 import 'home/home_screen.dart';
+import 'recalls/recalls_screen.dart';
 
 /// Bottom-nav shell: Home (dial), History, Badges, Care hub.
 class MainShell extends StatefulWidget {
@@ -20,7 +22,7 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _index = 0;
+  int _index = kScreenshotMode ? kScreenshotTab : 0;
   Timer? _clock;
   late bool _daytime = _isDaytime(DateTime.now());
 
@@ -34,6 +36,16 @@ class _MainShellState extends State<MainShell> {
     super.initState();
     // The label flips twice a day; a one-minute tick is plenty to catch it
     // without waiting for some other rebuild to happen along.
+    // Screenshot capture only: jump straight to a screen that normally takes
+    // a few taps to reach.
+    if (kScreenshotMode && kScreenshotRoute == 'recalls') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => const RecallsScreen()));
+        }
+      });
+    }
     _clock = Timer.periodic(const Duration(minutes: 1), (_) {
       final next = _isDaytime(DateTime.now());
       if (next != _daytime) setState(() => _daytime = next);

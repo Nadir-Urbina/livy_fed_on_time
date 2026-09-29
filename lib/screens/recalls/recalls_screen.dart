@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../build_flags.dart';
 import '../../data/app_state.dart';
 import '../../data/health_sources.dart';
 import '../../models/mascots.dart';
@@ -72,7 +73,7 @@ class _RecallsScreenState extends State<RecallsScreen> {
                       : 'Last checked ${DateFormat('MMM d, h:mm a').format(lastChecked)}',
                   style: LivyType.body(size: 12, color: LivyColors.mist),
                 ),
-                if (app.isDemo) ...[
+                if (app.isDemo && !kScreenshotMode) ...[
                   const Spacer(),
                   const DemoBadge(),
                 ],
