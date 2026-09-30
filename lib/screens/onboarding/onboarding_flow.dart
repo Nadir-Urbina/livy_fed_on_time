@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../data/app_state.dart';
+import '../../demo_override.dart';
 import '../../data/firestore_repository.dart';
 import '../../legal_links.dart';
 import '../../models/mascots.dart';
@@ -503,6 +505,30 @@ class _SignInPageState extends State<_SignInPage> {
           TextButton(
             onPressed: _busy ? null : _email,
             child: const Text('Use email instead'),
+          ),
+        // Debug builds only. The same switch lives in Settings, but Settings
+        // is behind the sign-in this screen *is* — so without an entry point
+        // here there's no way to reach the demo household without an account.
+        if (kDebugMode && !app.isDemo)
+          TextButton.icon(
+            onPressed: _busy
+                ? null
+                : () async {
+                    await DemoOverride.set(true);
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+                      duration: const Duration(seconds: 6),
+                      content: Text(
+                        'Demo data is on. Restart the app (press R in the '
+                        'flutter run terminal) to load it.',
+                        style: LivyType.body(size: 14),
+                      ),
+                    ));
+                  },
+            icon: Icon(Icons.science_outlined,
+                size: 16, color: LivyColors.faint),
+            label: Text('Load demo data (debug)',
+                style: LivyType.body(size: 13, color: LivyColors.faint)),
           ),
       ],
     );
