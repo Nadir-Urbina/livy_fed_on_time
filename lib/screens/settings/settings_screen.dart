@@ -1,9 +1,11 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/app_state.dart';
+import '../../demo_override.dart';
 import '../../legal_links.dart';
 import '../../models/mascots.dart';
 import '../../services/haptics.dart';
@@ -27,6 +29,20 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  /// Mirrors the stored [DemoOverride] value so the switch can render before
+  /// the async read comes back. Debug builds only.
+  bool _forceDemo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (kDebugMode) {
+      DemoOverride.isOn().then((on) {
+        if (mounted) setState(() => _forceDemo = on);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
@@ -281,6 +297,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
+          // Debug builds only — never compiled into a release the App Store
+          // sees, and [DemoOverride.isOn] refuses to read the flag there too.
+          if (kDebugMode && !app.isDemo) ...[
+            const SectionHeader('Debug'),
+            VoxelCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _forceDemo,
+                    onChanged: (on) async {
+                      await DemoOverride.set(on);
+                      if (!context.mounted) return;
+                      setState(() => _forceDemo = on);
+                      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+                        content: Text(
+                          on
+                              ? 'Demo data will load on the next launch. Restart the app.'
+                              : 'Back to your real household on the next launch.',
+                          style: LivyType.body(size: 14),
+                        ),
+                      ));
+                    },
+                    title: Text('Load demo data', style: LivyType.body(size: 15)),
+                    subtitle: Text(
+                      'Ignores Firebase and seeds the sample household — baby '
+                      'Olivia, a week of feeds, badges and recalls. For screen '
+                      'recordings and demos. Your real data is untouched and '
+                      'comes back when you switch this off.',
+                      style: LivyType.body(size: 12, color: LivyColors.mist),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (app.isDemo) ...[
             const SectionHeader('Demo'),
             VoxelCard(
